@@ -124,8 +124,6 @@ function getFlickrURL(search_term,tweet_handle) {
 			else
 				console.log("Posted: " + data);
 		 });
-	 	// post_tweet(message,tweet_handle,imageURL);
-	 //return imageURL;
 	});
 }
 
@@ -196,18 +194,11 @@ sad_stream.on('tweet', function (tweet) {
 
 				// generate kitten
 
-				getFlickrURL("cute kitten",tweet_handle);  // <---- get imgURL
-
-
-				// generate good feelz
-
 				newMessage(prev_message);
 
-				// put it together and send it
+				getFlickrURL("cute kitten",tweet_handle);
 
-				//post_tweet(message,tweet_handle,imageURL);
-
-				// sad_stream.start();
+				//console.log(imageURL);
 
 
 			} else {
@@ -225,6 +216,7 @@ sad_stream.on('tweet', function (tweet) {
 	}
 
 });
+//getFlickrURL("cute kitten",tweet_handle);
 // console.log(tweet_count+"\n");
 // sad_stream.stop();
 // console.log("sad_stream closed");
