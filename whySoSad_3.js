@@ -9,11 +9,10 @@ var T = new Twit({
 var Flickr = require('flickr').Flickr;
 var client = new Flickr('ae6667eb03bf378f6a47dfd80d02352d', '733a34feb0798834', 
                         {"oauth_token": 'optional oauth token', "oauth_token_secret": 'optional oauth token secret'});
-var tweet_count = 0;
+var tweetz = 0;
 var prev_sadness = [];
 var message = '';
 var prev_message = 0;
-
 function newMessage (prev_message) {
 	var message_num = Math.floor((Math.random() * 10) + 1);
 	if (message_num != prev_message) {
@@ -65,18 +64,15 @@ function newMessage (prev_message) {
 		console.log("Duplicate message selected!\n");
 		message_num = Math.floor((Math.random() * 10) + 1);
 	}
-
 	return message;
 }
-
-var post_tweet = function(message,tweet_handle,imageURL){
-	var cheer_up = "@" + tweet_handle + " " + message + imageURL; 
+var post_good_feelz = function(message,screen_name,imageURL){
+	var cheer_up = "@" + screen_name + " " + message + imageURL; 
 	T.post("statuses/update", { status: cheer_up }, function(err, data, response) {
-		console.log("Yes!  We brightened " + tweet_handle + "'s day!");
+		console.log("Yes!  We brightened " + screen_name + "'s day!");
 	})
 	//console.log("Here's the feelz! " + cheer_up + "\n");
 }
-
 // This function translates a numerical photo ID into a unique base 58 id used in Flickr's url shortening service.
 // Taken from https://www.flickr.com/groups/51035612836@N01/discuss/72157616713786392/72157620673064673
 function translateToBase58 (num){
@@ -95,8 +91,7 @@ function translateToBase58 (num){
     // return either the empty string or the encoded string.
     return(div)?''+alpha.substr(div,1)+enc:enc;
 }
-
-function getFlickrURL(search_term,tweet_handle) {
+function getFlickrURL(search_term) {
 	var flickr_params = {
 		text: search_term,
 		media: "photos",
@@ -113,12 +108,11 @@ function getFlickrURL(search_term,tweet_handle) {
 			return;
 		}
 		else console.log("Success!");
-
 		var photo1 = result.photos.photo[0];
 		//var http = require('http-request');
 		var imageURL = "http://flic.kr/p/"+translateToBase58(photo1.id);
 		console.log(imageURL);
-		T.post('statuses/update', { status: "@" + tweet_handle + " " + message + imageURL}, function(err, data, response) {
+		T.post('statuses/update', { status: message + imageURL}, function(err, data, response) {
 			if(err)
 				console.log("err: " + err);
 			else
@@ -126,31 +120,21 @@ function getFlickrURL(search_term,tweet_handle) {
 		 });
 	});
 }
-
-/*
-
-Start Stream!
-
-*/
-
+/*--------------------
+	Start Stream!
+--------------------*/
 var sad_stream = T.stream('statuses/filter', { track: ':(', language: 'en' });
-
 sad_stream.on('tweet', function (tweet) {
-
-	has_link = tweet.text.indexOf("http"),
-	has_mention = tweet.text.indexOf("@"),
-	has_rt = tweet.text.indexOf("RT");
-
-	if(has_link == -1 && has_rt == -1 && has_mention == -1){
-
-		if (tweet_count < 1){
-			var tweet_handle = tweet.user.screen_name;
+	linkz = tweet.text.indexOf("http"),
+	mentionz = tweet.text.indexOf("@"),
+	rtz = tweet.text.indexOf("RT");
+	if(linkz == -1 && mentionz == -1 && rtz == -1){
+		if (tweetz < 1){
+			var screen_name = tweet.user.screen_name;
 			var tweet_id = tweet.id_str;
-
-			console.log("Sad Panda: " + tweet_handle + "\n" + "Tweet ID: " + tweet_id + "\n" + "Tweet Text: " + tweet.text);
-			tweet_count++;
-
-			var has_run = function(){
+			console.log("Sad Panda: " + screen_name + "\n" + "Tweet ID: " + tweet_id + "\n" + "Tweet Text: " + tweet.text);
+			tweetz++;
+			var already_happy = function(){
 				prev_sadness.forEach(function(index){
 					if(prev_sadness[index] == tweet_id){
 						return true;
@@ -158,65 +142,37 @@ sad_stream.on('tweet', function (tweet) {
 					}
 				});
 			}
-
-			if (has_run != true) {
-
+			if (already_happy != true) {
 				sad_stream.stop();
-
-				/*
-
-					Retweet!
-
-				*/
-
+				/*-----------------------
+						Retweet!
+				-----------------------*/
 			    T.post('statuses/retweet/:id', { id: tweet_id }, 
 			    	function(err, data, res){
-
 					    if(err){
 					    	console.error(err);
 					    	sad_stream.start();
-
 					    	var rt_error = '1';
-
 					    } else {
-					    	console.log("Retweeted " + tweet_handle + "'s" + " sadness.");
+					    	console.log("Retweeted " + screen_name + "'s" + " sadness.");
 					    }
-
 					});
-
 				prev_sadness.push(tweet_id);
-
-				/*
-
-					Post New!
-
-				*/
-
+				/*---------------------
+						Post New!
+				---------------------*/
 				// generate kitten
-
 				newMessage(prev_message);
-
-				getFlickrURL("cute kitten",tweet_handle);
-
+				getFlickrURL("cute kitten",screen_name);
 				//console.log(imageURL);
-
-
 			} else {
-
-				console.log("We already retweeted " + tweet_handle + "'s" + " sadness. No Post Made.");
-
+				console.log("We already retweeted " + screen_name + "'s" + " sadness. No Post Made.");
 			}
-
 		}
 		else{
 			sad_stream.stop();
 			console.log("sad_stream closed");
 		}
-		
 	}
-
 });
-//getFlickrURL("cute kitten",tweet_handle);
-// console.log(tweet_count+"\n");
-// sad_stream.stop();
-// console.log("sad_stream closed");
+getFlickrURL("cute kitten");
