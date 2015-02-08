@@ -1,5 +1,6 @@
 var Twit = require('twit')
 var fs = require('fs');
+var async = require('async');
 var T = new Twit({
     consumer_key:         'vYz8TrCtGvAPRYZ20tHO8NHio'
   , consumer_secret:      '7GFDR4MTNbYza9dbWfgKi3O7KEgLGVYojoa852SEkZZpqjXjTq'
@@ -13,6 +14,7 @@ var tweetz = 0;
 var prev_sadness = [];
 var message = '';
 var prev_message = 0;
+
 function newMessage (prev_message) {
 	var message_num = Math.floor((Math.random() * 10) + 1);
 	if (message_num != prev_message) {
@@ -112,12 +114,12 @@ function getFlickrURL(search_term) {
 		//var http = require('http-request');
 		var imageURL = "http://flic.kr/p/"+translateToBase58(photo1.id);
 		console.log(imageURL);
-		T.post('statuses/update', { status: message + imageURL}, function(err, data, response) {
-			if(err)
-				console.log("err: " + err);
-			else
-				console.log("Posted: " + data);
-		 });
+		// T.post('statuses/update', { status: message + imageURL}, function(err, data, response) {
+		// 	if(err)
+		// 		console.log("err: " + err);
+		// 	else
+		// 		console.log("Posted: " + data);
+		//  });
 	});
 }
 /*--------------------
@@ -147,24 +149,43 @@ sad_stream.on('tweet', function (tweet) {
 				/*-----------------------
 						Retweet!
 				-----------------------*/
-			    T.post('statuses/retweet/:id', { id: tweet_id }, 
-			    	function(err, data, res){
-					    if(err){
-					    	console.error(err);
-					    	sad_stream.start();
-					    	var rt_error = '1';
-					    } else {
-					    	console.log("Retweeted " + screen_name + "'s" + " sadness.");
-					    }
-					});
+			  //   T.post('statuses/retweet/:id', { id: tweet_id }, 
+			  //   	function(err, data, res){
+					//     if(err){
+					//     	console.error(err);
+					//     	sad_stream.start();
+					//     	var rt_error = '1';
+					//     } else {
+					//     	console.log("Retweeted " + screen_name + "'s" + " sadness.");
+					//     }
+					// });
+				console.log("Retweeted " + screen_name + "'s" + " sadness.");
 				prev_sadness.push(tweet_id);
+				console.log(prev_sadness);
 				/*---------------------
 						Post New!
 				---------------------*/
-				// generate kitten
-				newMessage(prev_message);
-				getFlickrURL("cute kitten",screen_name);
-				//console.log(imageURL);
+				
+				async.series([
+    				function(callback){
+        				newMessage(prev_message); 
+        				callback(null, message);
+    				},
+    				function(callback){
+        				getFlickrURL("kitten"); 
+        				callback(null, imageURL);
+    				}
+    				function(callback){
+        				post_good_feelz(message,screen_name,imageURL); 
+        				callback(null, cheer_up);
+    				}
+				],
+				// optional callback 
+				function(err, results){
+    				// results is now equal to ['one', 'two'] 
+				});
+
+
 			} else {
 				console.log("We already retweeted " + screen_name + "'s" + " sadness. No Post Made.");
 			}
@@ -175,4 +196,3 @@ sad_stream.on('tweet', function (tweet) {
 		}
 	}
 });
-getFlickrURL("cute kitten");
